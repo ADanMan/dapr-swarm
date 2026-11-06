@@ -1,0 +1,6 @@
+{
+  "name": "dapr-swarm-ui-checks",
+  "private": true,
+  "scripts": {"test:ui": "node --test tests/ui/*.test.cjs"},
+  "devDependencies": {"linkedom": "0.18.15"}
+}

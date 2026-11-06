@@ -1,0 +1,13 @@
+.git
+.venv
+.superpowers
+data
+logs
+__pycache__
+.pytest_cache
+
+.env
+.env.*
+node_modules
+*.pem
+*.key

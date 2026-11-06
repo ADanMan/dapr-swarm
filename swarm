@@ -1,0 +1,8 @@
+#!/usr/bin/env python3
+"""Run the local Swarm CLI using this installation's Python environment."""
+import os
+from pathlib import Path
+import sys
+
+root = Path(__file__).resolve().parent
+os.execv(str(root / '.venv/bin/python'), [str(root / '.venv/bin/python'), str(root / 'app/cli.py'), *sys.argv[1:]])

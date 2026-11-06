@@ -1,0 +1,58 @@
+name: dapr-swarm-local
+services:
+  app:
+    build: .
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    environment:
+      BEEGATE_API_KEY: ${BEEGATE_API_KEY:-}
+      BEEGATE_BASE_URL: ${BEEGATE_BASE_URL:-}
+      BEEGATE_MODEL: ${BEEGATE_MODEL:-}
+      DAPR_GRPC_ENDPOINT: http://sidecar:50001
+      DAPR_HTTP_ENDPOINT: http://sidecar:3500
+      DAPR_HTTP_PORT: "3500"
+      DAPR_GRPC_PORT: "50001"
+      SWARM_DATA_DIR: /data
+      SEARXNG_URL: http://searxng:8080
+      OTEL_SDK_DISABLED: "true"
+      ANONYMIZED_TELEMETRY: "false"
+      HOME: /tmp/swarm-home
+    ports: ["127.0.0.1:8788:8788"]
+    volumes: ["./data:/data"]
+    restart: unless-stopped
+    init: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 2g
+    depends_on: [redis, scheduler, placement, searxng]
+  sidecar:
+    image: daprio/daprd:1.19.0
+    command: ["./daprd", "--app-id", "local-swarm", "--app-port", "8788", "--app-channel-address", "app", "--dapr-http-port", "3500", "--dapr-grpc-port", "50001", "--placement-host-address", "placement:50005", "--scheduler-host-address", "scheduler:50006", "--resources-path", "/components", "--log-level", "warn"]
+    volumes: ["./resources:/components:ro"]
+    depends_on: [redis, scheduler, placement]
+    restart: unless-stopped
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes: ["redis-data:/data"]
+    restart: unless-stopped
+  placement:
+    image: daprio/placement:1.19.0
+    command: ["./placement", "--port", "50005", "--log-level", "warn"]
+    restart: unless-stopped
+  scheduler:
+    image: daprio/scheduler:1.19.0
+    command: ["./scheduler", "--port", "50006", "--etcd-data-dir", "/data", "--override-broadcast-host-port", "scheduler:50006", "--log-level", "warn"]
+    volumes: ["scheduler-data:/data"]
+    user: "0:0"
+    restart: unless-stopped
+  searxng:
+    image: searxng/searxng@sha256:f4aa660c54d062dedb268be84e821ea24e39f48c7a496af8dd02cc9eedb93847
+    volumes: ["./searxng/settings.yml:/etc/searxng/settings.yml:ro"]
+    environment:
+      SEARXNG_SECRET: ${SEARXNG_SECRET:-}
+      SEARXNG_BASE_URL: http://searxng:8080/
+    restart: unless-stopped
+    mem_limit: 768m
+volumes:
+  redis-data:
+  scheduler-data:

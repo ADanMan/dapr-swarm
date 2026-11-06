@@ -1,0 +1,14 @@
+use_default_settings: true
+general:
+  instance_name: Local Swarm Search
+search:
+  safe_search: 0
+  formats: [html, json]
+  default_lang: auto
+server:
+  # The launcher supplies a random SEARXNG_SECRET in the container environment.
+  limiter: false
+  image_proxy: false
+outgoing:
+  request_timeout: 8.0
+  max_request_timeout: 15.0
